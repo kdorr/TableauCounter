@@ -1,6 +1,6 @@
 PROG = main
 CC = gcc
-CFLAGS = -Wall  -g 
+CFLAGS = -Wall  -g  -fopenmp 
 LFLAGS = -o exec.out
 
 $(PROG): $(PROG).c

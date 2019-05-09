@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <omp.h>
 
 #include "tableau.c"
 #include "parallelCounter.c"
@@ -26,6 +27,20 @@ int main(int argc, char *argv[]){
     total = writeCount(tableau);
   }else {
     // Do some OMP and MPI magic
+    int THREAD_COUNT = (tableau->SORTED_RULES[0][0][0] - 1) * (tableau->SORTED_RULES[1][0][0] - 1);
+    ParallelCounter** counters = (ParallelCounter**) malloc(sizeof(ParallelCounter*)*THREAD_COUNT);
+    printf("There were %d threads started\n", THREAD_COUNT);
+    int i;
+    #pragma omp parallel for
+    for(i = 0; i < THREAD_COUNT; i++){
+      counters[i] = makeParallelCounter(tableau, i, THREAD_COUNT);
+      run(counters[i]);
+    }
+
+    total = 0;
+    for(i=0; i < THREAD_COUNT; i++){
+      total += counters[i]->count;
+    }
   }
 
   printf("\nThere are %ld tableaux of this shape.\n", total);

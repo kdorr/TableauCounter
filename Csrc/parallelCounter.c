@@ -149,5 +149,5 @@ void run(ParallelCounter* p){
 
   }
 
-  printf("thread %d found %ld tableau(x)", p->R, p->count);
+  printf("Thread %d found %ld tableau(x)\n", p->R, p->count);
 }
