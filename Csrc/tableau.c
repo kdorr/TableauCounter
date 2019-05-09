@@ -6,7 +6,7 @@ typedef struct {
   int*     WEIGHT;
   int***   SORTED_RULES;
   char     RECT;
-  int      NUMLINES;
+  int      NUMLINES; // Length of shape array
   int      WEIGHT_SUMMED;
 } Tableau;
 
@@ -14,6 +14,13 @@ void printTableau(Tableau* t){
   return;
 }
 Tableau* makeTableau(int** weights, int* lengths, int numlines);
+int** getCellMaxima(Tableau* t, int** weights);
+int** makeRules(Tableau* t);
+int getListIndex(Tableau* t, int row, int col);
+int getCellIndex(Tableau* t, int row, int col);
+int*** sortRules(Tableau* t, int** rules, int rulesLen, int** weights);
+int** cumulativeSums(Tableau* t, int** weights);
+int* flatten(Tableau* t, int** array);
 
 Tableau* getTableau(){
   FILE* tableauIn = fopen("../Tableau.txt", "r");
@@ -49,6 +56,7 @@ Tableau* getTableau(){
 
 }
 
+// Constructor
 Tableau* makeTableau(int** weights, int* lengths, int numlines){
   int i,j;
   Tableau* this = (Tableau*) malloc(sizeof(Tableau));
@@ -69,6 +77,8 @@ Tableau* makeTableau(int** weights, int* lengths, int numlines){
   }
   this->RECT = rectangular;
   this->WEIGHT = (int*) malloc(sizeof(int)*length);
+  // Note that 'length' is the length of WEIGHT
+
   int iterator=0;
   for(i=0; i < numlines; i++){
     for(j=0; j < lengths[i]; j++){
@@ -77,8 +87,8 @@ Tableau* makeTableau(int** weights, int* lengths, int numlines){
   }
   if(this->WEIGHT[0] != 1)
     printf("First weight must be 1");
-  if(RECT && WEIGHT[WEIGHT.length - 1] != 1)
-    print("Last weight of a rectangular tableau must be 1");
+  if(this->RECT && this->WEIGHT[length - 1] != 1)
+    printf("Last weight of a rectangular tableau must be 1");
 
   this->WEIGHT_SUMMED = 0;
   for(i=0; i < length; i++){
@@ -86,9 +96,9 @@ Tableau* makeTableau(int** weights, int* lengths, int numlines){
   }
 
   int** rulesList = makeRules(this);
-  int minindex = getListIndex(1, 1);
+  int minIndex = getListIndex(this, 1, 1);
   int maxIndex = 0;
-  if(RECT){
+  if(this->RECT){
     for(i=0; i < length; i++){
       maxIndex += this->WEIGHT[i];
     }
@@ -97,6 +107,7 @@ Tableau* makeTableau(int** weights, int* lengths, int numlines){
     maxIndex = 99;
   }
 
+  // Untested and sketchy
   for(i = 0; rulesList[i] != ((int*) NULL); i++);
   int rulesListSize = i;
 
@@ -112,7 +123,7 @@ Tableau* makeTableau(int** weights, int* lengths, int numlines){
 
   // Sort rulesList and remove bad values.
   for (i = 0; i < rulesListSize; i++) {
-    for (j = i + 1; j < n; j++){
+    for (j = i + 1; j < rulesListSize; j++){
       if (i == 0 && rulesList[j][0] == -5 && rulesList[j][0] == -5){
 	rulesList[j][0] = rulesList[rulesListSize - 1][0];
 	rulesList[j][1] = rulesList[rulesListSize - 1][1];
@@ -142,7 +153,7 @@ Tableau* makeTableau(int** weights, int* lengths, int numlines){
 
 }
 
-private int getCellIndex(Tableau* t, int row, int col) {
+int getCellIndex(Tableau* t, int row, int col) {
   int g = 0;
   int i,j;
   for(i = 0; i < row; i++) {
@@ -156,7 +167,7 @@ private int getCellIndex(Tableau* t, int row, int col) {
 }
 
 //Indices start at 1 because that's fun
-private int getListIndex(Tableau* t, int row, int col) {
+int getListIndex(Tableau* t, int row, int col) {
   int g = 0;
   int h = 0;
   int i,j;
@@ -179,8 +190,8 @@ int** makeRules(Tableau* t){
   for (i=1; i < t->NUMLINES; i++){
     for(j=1; j<=t->SHAPE[i]; j++){
       rulesList[current] = (int*)malloc(2*sizeof(int));
-      rulesList[current][0] = getListIndex(i, j);
-      rulesList[current][1] = getListIndex(i + 1, j) - t->WEIGHT[getCellIndex(i + 1, j)] + 1;
+      rulesList[current][0] = getListIndex(t, i, j);
+      rulesList[current][1] = getListIndex(t, i + 1, j) - t->WEIGHT[getCellIndex(t, i + 1, j)] + 1;
       current++;
     }
   }
@@ -188,18 +199,18 @@ int** makeRules(Tableau* t){
   for (i=1; i <= t->NUMLINES; i++){
     for(j=1; j< t->SHAPE[i-1]; j++){
       rulesList[current] = (int*)malloc(2*sizeof(int));
-      rulesList[current][0] = getListIndex(i, j);
-      rulesList[current][1] = getListIndex(i, j) + 1;
+      rulesList[current][0] = getListIndex(t, i, j);
+      rulesList[current][1] = getListIndex(t, i , j) + 1;
       current++;
     }
   }
 
   for (i=1; i <= t->NUMLINES; i++){
     for(j=1; j <= t->SHAPE[i-1]; j++){
-      for(k=1; k < t-WEIGHT[getCellIndex(i,j)]; k++) {
+      for(k=1; k < t->WEIGHT[getCellIndex(t,i,j)]; k++) {
 	rulesList[current] = (int*)malloc(2*sizeof(int));
-	rulesList[current][0] = getListIndex(i, j) - k;
-	rulesList[current][1] = getListIndex(i, j) - k+ 1;
+	rulesList[current][0] = getListIndex(t, i, j) - k;
+	rulesList[current][1] = getListIndex(t, i, j) - k+ 1;
 	current++;
       }
     }
@@ -236,15 +247,17 @@ int*** sortRules(Tableau* t, int** rules, int rulesLen, int** weights){
   }
   
   sortedRules = (int***) malloc(sizeof(int**)*getN(t));
-  int* maxima = flatten(getCellMaxima(t, weights));
+  int* maxima = flatten(t, getCellMaxima(t, weights));
 
+  //STUB return
+  return NULL;
 }
 
 
 int** getCellMaxima(Tableau* t, int** weights){
 
   int** maxima = (int**) malloc(sizeof(int*)*t->NUMLINES);
-  int i,j;
+  int i,j,k;
 
   for(i=0; i < t->NUMLINES; i++){
     int sum = 0;
@@ -255,7 +268,7 @@ int** getCellMaxima(Tableau* t, int** weights){
       maxima[i] = (int*) malloc(sizeof(int)*(sum-1));
     } else {
       if ( i == t->NUMLINES - 1 && t->RECT){
-	maxima[i] = (int*) malloc(sizeof(int)*(sum - weights[t->NUMLINES - 1][t-SHAPE[t->NUMLINES] - 1]));
+	maxima[i] = (int*) malloc(sizeof(int)*(sum - weights[t->NUMLINES - 1][t->SHAPE[t->NUMLINES] - 1]));
       } else {
 	maxima[i] = (int*) malloc(sizeof(int)*sum);
       }
@@ -263,6 +276,48 @@ int** getCellMaxima(Tableau* t, int** weights){
   }
 
   int h;
-  
+  int** cSums = cumulativeSums(t, weights);
+  for (i = 0; i < t->NUMLINES; i++){
+    h=0;
+    for(j=0; j<t->SHAPE[i]; j++){
+      for(k=1; k <= weights[i][j]; k++){
+	if((t->RECT && i == t->NUMLINES-1 && j== t->SHAPE[i] -1 ) 
+	   || (i==0 && j==0)){
+	  break;
+	}
+	maxima[i][h++] = k + cSums[i][j];
+      }
+    }
+  }
+  return maxima;
+}
 
+
+int** cumulativeSums(Tableau* t, int** weights){
+
+  int** ints = (int**) malloc(sizeof(int*) * t->NUMLINES);
+  int sum;
+  int g,h,i,j;
+
+  for(g=0; g < t->NUMLINES; g++){
+    ints[g] = (int*) malloc(sizeof(int)*t->SHAPE[g]);
+    for(h = 0; h < t->SHAPE[g]; h++){
+      sum = 0;
+      for(i=0; i < t->NUMLINES; i++){
+	for(j=0; j < t->SHAPE[g]; j++){
+	  if(!((i >= g && j > h) || (i > g && j >=h))){
+	    sum +=weights[i][j];
+	  }
+	}
+      }
+      sum -= weights[g][h];
+      ints[g][h] = sum;
+    }
+  }
+  return ints;
+}
+
+int* flatten(Tableau* t, int** array){
+
+  return NULL;
 }
