@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "tableau.c"
+#include "parallelCounter.c"
 
 long int writeCount(Tableau* t){
   return 0;

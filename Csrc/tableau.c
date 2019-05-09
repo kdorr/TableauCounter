@@ -10,6 +10,7 @@ typedef struct {
   int      WEIGHT_SUMMED;
   int*     MAXIMA_SHAPE;
   int      FLATTENED_LEN;
+  int*     SORTED_RULES_SHAPE;
 } Tableau;
 
 void printTableau(Tableau* t){
@@ -234,7 +235,7 @@ int getN(Tableau* t){
 int*** sortRules(Tableau* t, int** rules, int rulesLen, int** weights){
 
   int*** sortedRules;
-  int counts[getN(t)];
+  int* counts = (int*) malloc(sizeof(int)*getN(t));
   int c;
   int i,j;
 
@@ -248,6 +249,7 @@ int*** sortRules(Tableau* t, int** rules, int rulesLen, int** weights){
     counts[i] = c;
   }
   
+  t->SORTED_RULES_SHAPE = counts;
   sortedRules = (int***) malloc(sizeof(int**)*getN(t));
   int* maxima = flatten(t, getCellMaxima(t, weights));
 
