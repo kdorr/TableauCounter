@@ -8,6 +8,8 @@ typedef struct {
   char     RECT;
   int      NUMLINES; // Length of shape array
   int      WEIGHT_SUMMED;
+  int*     MAXIMA_SHAPE;
+  int      FLATTENED_LEN;
 } Tableau;
 
 void printTableau(Tableau* t){
@@ -249,14 +251,27 @@ int*** sortRules(Tableau* t, int** rules, int rulesLen, int** weights){
   sortedRules = (int***) malloc(sizeof(int**)*getN(t));
   int* maxima = flatten(t, getCellMaxima(t, weights));
 
-  //STUB return
-  return NULL;
+  for (i=0; i < getN(t); i++){
+    c = 1;
+    sortedRules[i] = (int**) malloc(sizeof(int*)*counts[i]);
+    sortedRules[i][0] = (int*) malloc (sizeof(int)*1);
+    sortedRules[i][0][0] = maxima[i];
+
+    for(j=0; j < rulesLen; j++){
+      if (rules[j][0] == i || rules[j][1] == i){
+	sortedRules[i][c++] = rules[j];
+      }
+    }
+  }
+  
+  return sortedRules;
 }
 
 
 int** getCellMaxima(Tableau* t, int** weights){
 
   int** maxima = (int**) malloc(sizeof(int*)*t->NUMLINES);
+  int* maximaShape = (int*) malloc(sizeof(int)*t->NUMLINES);
   int i,j,k;
 
   for(i=0; i < t->NUMLINES; i++){
@@ -266,14 +281,19 @@ int** getCellMaxima(Tableau* t, int** weights){
     }
     if (i==0){
       maxima[i] = (int*) malloc(sizeof(int)*(sum-1));
+      maximaShape[i] = sum - 1;
     } else {
       if ( i == t->NUMLINES - 1 && t->RECT){
 	maxima[i] = (int*) malloc(sizeof(int)*(sum - weights[t->NUMLINES - 1][t->SHAPE[t->NUMLINES] - 1]));
+	maximaShape[i] = (sum - weights[t->NUMLINES - 1][t->SHAPE[t->NUMLINES] - 1]);
       } else {
 	maxima[i] = (int*) malloc(sizeof(int)*sum);
+	maximaShape[i] = sum;
       }
     }
   }
+
+  t->MAXIMA_SHAPE = maximaShape;
 
   int h;
   int** cSums = cumulativeSums(t, weights);
@@ -319,5 +339,20 @@ int** cumulativeSums(Tableau* t, int** weights){
 
 int* flatten(Tableau* t, int** array){
 
-  return NULL;
+  int* f;
+  int s = 0;
+  int i,j;
+  for (i=0; i <t->NUMLINES; i++){
+    s += t->MAXIMA_SHAPE[i];
+  }
+  t->FLATTENED_LEN = s;
+  f = (int*) malloc(sizeof(int)*s);
+  s = 0;
+  for(i = 0; i < t->NUMLINES; i++){
+    for(j=0; j < t->MAXIMA_SHAPE[i]; j++){
+      f[s++] = array[i][j];
+    }
+  }
+
+  return f;
 }
