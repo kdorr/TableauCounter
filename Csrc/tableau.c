@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 typedef struct {
   int*     SHAPE;
@@ -30,11 +31,18 @@ Tableau* getTableau(){
   int numlines = 0;
   int* lengths = malloc(sizeof(int)*(1<<7));
   size_t len;
-  char* line = NULL;
+  char* line = (char*) malloc(200*sizeof(char));
   int read;
 
   while ((read = getline(&line, &len, tableauIn)) != -1) {
-    lengths[numlines]=read;
+    char* pch = strtok(line, " ");
+    int l = 0;
+    while(pch != NULL){
+      pch = strtok(NULL, " ");
+      l++;
+    }
+    
+    lengths[numlines]=l;
     numlines++;
   }
 
@@ -45,16 +53,20 @@ Tableau* getTableau(){
   }
 
   fclose(tableauIn);
-  tableauIn = fopen("../Tableau.txt", "r");
+  FILE* tableauIn2 = fopen("../Tableau.txt", "r");
 
   for(i = 0; i < numlines; i++) {
     for(j = 0; j < lengths[i]; j++) {
-      if(!fscanf(tableauIn, "%d", &weights[i][j])) {break;}
+      if(!fscanf(tableauIn2, " %d", &weights[i][j])) {break;}
     }
   }
 
-  fclose(tableauIn);
+  for(i = 0; i < numlines; i++){
+    printf("%d\n", lengths[i]);
+  }
 
+  fclose(tableauIn2);
+  free(line);
   return makeTableau (weights, lengths, numlines);
 
 }
@@ -70,6 +82,8 @@ Tableau* makeTableau(int** weights, int* lengths, int numlines){
     length += lengths[i];
   }
   this->NUMLINES = numlines;
+
+
 
   char rectangular = 1;
   for(i=1; i < numlines; i++){
@@ -150,7 +164,14 @@ Tableau* makeTableau(int** weights, int* lengths, int numlines){
   }
 
   this->SORTED_RULES = sortRules(this, rulesList, rulesListSize, weights);
-  
+
+  printf("lengths:\n");
+  for(i = 0; i < numlines; i++){
+    printf("%d, ", lengths[i]);
+  }
+  printf("\n\n");
+
+
   free(lengths);
   return this;
 

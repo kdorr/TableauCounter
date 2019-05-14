@@ -31,7 +31,7 @@ int main(int argc, char *argv[]){
     ParallelCounter** counters = (ParallelCounter**) malloc(sizeof(ParallelCounter*)*THREAD_COUNT);
     printf("There were %d threads started\n", THREAD_COUNT);
     int i;
-    #pragma omp parallel for
+//    #pragma omp parallel for private(tableau, i)
     for(i = 0; i < THREAD_COUNT; i++){
       counters[i] = makeParallelCounter(tableau, i, THREAD_COUNT);
       run(counters[i]);
